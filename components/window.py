@@ -5,7 +5,8 @@ from tkinter import Frame, PhotoImage, Tk
 from assets import Dimension
 
 from .game import GameFrame
-from .menu import MainMenu, MenuFrame, SettingsMenu
+from .menu import MainMenu, MenuFrame, MultiplayerMenu, SettingsMenu
+from .network import Communication
 from .settings import Settings
 from .translation import TranslationTable
 
@@ -66,6 +67,7 @@ class MainWindow(Tk):
                     width=self.settings.resolution.width,
                     height=self.settings.resolution.height)
         self.current_frame = frame
+        self.update()
 
     def show_main_menu(self) -> None:
         '''Renders the main menu.'''
@@ -75,20 +77,40 @@ class MainWindow(Tk):
         '''Renders the settings menu.'''
         self._update_frame(SettingsMenu(window=self))
 
+    def show_multiplayer_menu(self) -> None:
+        '''Renders the multiplayer menu.'''
+        self._update_frame(MultiplayerMenu(window=self))
+
     def start_singleplayer(self) -> None:
         '''Starts a solo game vs the computer.'''
-        singleplayer: GameFrame = GameFrame(window=self)
-        singleplayer.solo = True
-        singleplayer.difficulty = self.settings.difficulty
+        singleplayer: GameFrame = GameFrame(window=self, solo=True,
+                                            difficulty=self.settings.difficulty)
         singleplayer.new_game()
         self._update_frame(singleplayer)
 
-    def start_multiplayer(self) -> None:
+    def start_local_multiplayer(self) -> None:
         '''Starts a 2 player versus.'''
-        multiplayer: GameFrame = GameFrame(window=self)
-        multiplayer.solo = False
+        multiplayer: GameFrame = GameFrame(window=self, solo=False)
         multiplayer.new_game()
         self._update_frame(multiplayer)
+
+    def host_multiplayer(self) -> None:
+        '''Hosts a 2 player versus.'''
+        multiplayer: GameFrame = GameFrame(window=self, solo=False,
+                                           communication=Communication('127.0.0.1'))
+        multiplayer.com.wait_for_connection()
+        multiplayer.new_game()
+        self._update_frame(multiplayer)
+
+    def join_multiplayer(self) -> None:
+        '''Joins a 2 player versus.'''
+        multiplayer: GameFrame = GameFrame(window=self, solo=False,
+                                           communication=Communication('127.0.0.1'))
+        multiplayer.com.join()
+        multiplayer.new_game()
+        self._update_frame(multiplayer)
+        multiplayer.player_turn = False
+        multiplayer.make_move(multiplayer.com.get_move())
 
     def set_difficulty(self, difficulty: int) -> None:
         '''Changes the difficulty to given value.'''
