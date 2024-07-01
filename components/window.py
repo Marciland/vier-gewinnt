@@ -102,10 +102,12 @@ class MainWindow(Tk):
         multiplayer.new_game()
         self._update_frame(multiplayer)
 
-    def join_multiplayer(self) -> None:
+    def join_multiplayer(self, ip: str) -> None:
         '''Joins a 2 player versus.'''
+        self.settings.last_ip = ip
+        self.settings.save()
         multiplayer: GameFrame = GameFrame(window=self, solo=False,
-                                           communication=Communication('127.0.0.1'))
+                                           communication=Communication(ip=ip))
         multiplayer.com.join()
         multiplayer.new_game()
         self._update_frame(multiplayer)

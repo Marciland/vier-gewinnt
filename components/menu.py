@@ -2,7 +2,7 @@
 from tkinter import Button, Entry
 
 from assets import (Difficulty, Language, MenuFrame, MenuPosition, Resolution,
-                    SubMenu)
+                    SubMenu, ErrorMessage)
 
 
 class MainMenu(MenuFrame):
@@ -293,7 +293,28 @@ class MultiplayerSubMenu(SubMenu):
     def __init__(self, window, bot_war: bool) -> None:
         super().__init__(window=window)
         self.bot_war = bot_war
+        self.validation = self.register(self._validate_entry)
         self._prepare_multiplayer_sub_menu()
+
+    def _validate_entry(self, what) -> bool:
+        valid_chars = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']
+        for char in list(what):
+            if char not in valid_chars:
+                return False
+        return True
+
+    def _ip_valid(self, ip: str) -> bool:
+        return len([i for i in ip.split('.') if i]) == 4 \
+            and ip.count('.') == 3 \
+            and len(ip) >= 7
+
+    def _join_multiplayer(self, ip: str) -> None:
+        if self._ip_valid(ip):
+            self.window.join_multiplayer(ip)
+        else:
+            title = self.window.translation.get('bad_ip_title')
+            msg = self.window.translation.get('bad_ip_msg')
+            ErrorMessage(frame=self, title=title, msg=msg)
 
     def _prepare_multiplayer_sub_menu(self) -> None:
         host = Button(master=self.window,
@@ -304,7 +325,9 @@ class MultiplayerSubMenu(SubMenu):
                                     text=host_text)
         self._place_menu_button(button=host,
                                 position=MenuPosition.TOP)
-        ip = Entry(master=self.window, justify='center')
+        ip = Entry(master=self.window, justify='center',
+                   validate='all',
+                   validatecommand=(self.validation, '%S'))
         ip.configure(font=self.small_font,
                      background='pale turquoise')
         ip.insert(0, self.window.settings.last_ip)
@@ -315,7 +338,7 @@ class MultiplayerSubMenu(SubMenu):
                  width=self.button_width,
                  height=self.button_height//2)
         join = Button(master=self.window,
-                      command=self.window.join_multiplayer)
+                      command=lambda: self._join_multiplayer(ip.get()))
         join_text = self.window.translation.get('multiplayer_join')
         self._configure_menu_button(button=join,
                                     font=self.font,

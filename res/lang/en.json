@@ -29,5 +29,7 @@
     "retry": "Yes",
     "cancel": "No",
     "small_res": "Small",
-    "medium_res": "Medium"
+    "medium_res": "Medium",
+    "bad_ip_title": "Invalid IP",
+    "bad_ip_msg": "The IP is invalid!\nPlease enter a valid IP-Adress!"
 }
