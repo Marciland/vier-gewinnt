@@ -1,9 +1,8 @@
 '''contains all menu components.'''
-from tkinter import Button
-from tkinter.font import Font
+from tkinter import Button, Entry
 
 from assets import (Difficulty, Language, MenuFrame, MenuPosition, Resolution,
-                    SubMenu)
+                    SubMenu, ErrorMessage)
 
 
 class MainMenu(MenuFrame):
@@ -25,7 +24,7 @@ class MainMenu(MenuFrame):
         self._place_menu_button(button=singleplayer,
                                 position=MenuPosition.TOP)
         multiplayer = Button(master=self,
-                             command=self.window.start_multiplayer)
+                             command=self.window.show_multiplayer_menu)
         multiplayer_text = self.window.translation.get('multiplayer')
         self._configure_menu_button(button=multiplayer,
                                     font=self.font,
@@ -89,13 +88,6 @@ class DifficultyMenu(SubMenu):
 
     def __init__(self, window) -> None:
         super().__init__(window=window)
-        match self.window.settings.resolution:
-            case Resolution.SMALL.value:
-                self.difficulty_font: Font = Font(family='Cooper Black',
-                                                  size=22)
-            case Resolution.MEDIUM.value:
-                self.difficulty_font: Font = Font(family='Cooper Black',
-                                                  size=32)
         self.difficulty_buttons: dict[str, Button] = {}
         self._prepare_difficulty_menu()
         self._configure_difficulty_buttons()
@@ -121,7 +113,7 @@ class DifficultyMenu(SubMenu):
     def _configure_difficulty_buttons(self) -> None:
         for index, button in enumerate(list(self.difficulty_buttons.values())):
             self._configure_menu_button(button=button,
-                                        font=self.difficulty_font,
+                                        font=self.small_font,
                                         text=button['text'])
             if index % 2 == 0:
                 top = 0 if index == 0 else 1
@@ -249,7 +241,107 @@ class LanguageMenu(SubMenu):
 
     def _set_language_button(self):
         match self.window.settings.language:
-            case Language.ENGLISH.name:
+            case Language.ENGLISH.value:
                 self._change_language(Language.ENGLISH)
-            case Language.GERMAN.name:
+            case Language.GERMAN.value:
                 self._change_language(Language.GERMAN)
+
+
+class MultiplayerMenu(SubMenu):
+    '''
+    Submenu for selecting the multiplayer mode.
+    Choose from:
+        - local
+        - online
+        - online "bot fight"
+    '''
+
+    def __init__(self, window) -> None:
+        super().__init__(window=window)
+        self._prepare_multiplayer_menu()
+
+    def _prepare_multiplayer_menu(self) -> None:
+        local = Button(master=self,
+                       command=self.window.start_local_multiplayer)
+        local_text = self.window.translation.get('multiplayer_local')
+        self._configure_menu_button(button=local,
+                                    font=self.font,
+                                    text=local_text)
+        self._place_menu_button(button=local,
+                                position=MenuPosition.TOP)
+        online = Button(master=self,
+                        command=lambda: self.show_sub_menu(MultiplayerSubMenu, False))
+        online_text = self.window.translation.get('multiplayer_online')
+        self._configure_menu_button(button=online,
+                                    font=self.font,
+                                    text=online_text)
+        self._place_menu_button(button=online,
+                                position=MenuPosition.MIDDLE)
+        online_ai = Button(master=self,
+                           command=lambda: self.show_sub_menu(MultiplayerSubMenu, True))
+        online_ai_text = self.window.translation.get('multiplayer_online_ai')
+        self._configure_menu_button(button=online_ai,
+                                    font=self.font,
+                                    text=online_ai_text)
+        self._place_menu_button(button=online_ai,
+                                position=MenuPosition.BOTTOM)
+
+
+class MultiplayerSubMenu(SubMenu):
+    '''Submenu for selecting the multiplayer mode.'''
+
+    def __init__(self, window, bot_war: bool) -> None:
+        super().__init__(window=window)
+        self.bot_war = bot_war
+        self.validation = self.register(self._validate_entry)
+        self._prepare_multiplayer_sub_menu()
+
+    def _validate_entry(self, what) -> bool:
+        valid_chars = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']
+        for char in list(what):
+            if char not in valid_chars:
+                return False
+        return True
+
+    def _ip_valid(self, ip: str) -> bool:
+        return len([i for i in ip.split('.') if i]) == 4 \
+            and ip.count('.') == 3 \
+            and len(ip) >= 7
+
+    def _join_multiplayer(self, ip: str) -> None:
+        if self._ip_valid(ip):
+            self.window.join_multiplayer(ip)
+        else:
+            title = self.window.translation.get('bad_ip_title')
+            msg = self.window.translation.get('bad_ip_msg')
+            ErrorMessage(frame=self, title=title, msg=msg)
+
+    def _prepare_multiplayer_sub_menu(self) -> None:
+        host = Button(master=self.window,
+                      command=self.window.host_multiplayer)
+        host_text = self.window.translation.get('multiplayer_host')
+        self._configure_menu_button(button=host,
+                                    font=self.font,
+                                    text=host_text)
+        self._place_menu_button(button=host,
+                                position=MenuPosition.TOP)
+        ip = Entry(master=self.window, justify='center',
+                   validate='all',
+                   validatecommand=(self.validation, '%S'))
+        ip.configure(font=self.small_font,
+                     background='pale turquoise')
+        ip.insert(0, self.window.settings.last_ip)
+        ip.place(x=self.button_margin_x,
+                 y=(MenuPosition.BOTTOM.value+1) * self.button_margin_y +
+                 MenuPosition.MIDDLE.value * self.button_height +
+                 self.button_margin_y*3//4,
+                 width=self.button_width,
+                 height=self.button_height//2)
+        join = Button(master=self.window,
+                      command=lambda: self._join_multiplayer(ip.get()))
+        join_text = self.window.translation.get('multiplayer_join')
+        self._configure_menu_button(button=join,
+                                    font=self.font,
+                                    text=join_text)
+        self._place_menu_button(button=join,
+                                position=MenuPosition.BOTTOM)

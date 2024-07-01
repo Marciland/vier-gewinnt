@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from components import GameFrame
+    from components.menu import MultiplayerSubMenu
 
 
 class EndMessage(Dialog):
@@ -48,3 +49,23 @@ class EndMessage(Dialog):
     def _ok(self):
         self.replay = True
         self.ok()
+
+
+class ErrorMessage(Dialog):
+    '''Dialog that popups if an error occurs.'''
+
+    def __init__(self, frame, title: str, msg: str) -> None:
+        self.frame: MultiplayerSubMenu = frame
+        self.msg = msg
+        super().__init__(parent=frame, title=title)
+
+    def buttonbox(self):
+        # taken from Dialog and modified for custom language
+        box = Frame(self)
+        w = Button(box, text='Ok', width=10, command=self.ok, default=ACTIVE)
+        w.pack(side=LEFT, padx=5, pady=5)
+        box.pack()
+
+    def body(self, master):
+        Label(master=master, text=self.msg).pack()
+        return master

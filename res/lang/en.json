@@ -2,6 +2,11 @@
     "title": "Connect Four",
     "singleplayer": "Singleplayer",
     "multiplayer": "Multiplayer",
+    "multiplayer_local": "Local Game",
+    "multiplayer_online": "Online Game",
+    "multiplayer_online_ai": "Online BotWar",
+    "multiplayer_host": "Host Game",
+    "multiplayer_join": "Join",
     "settings": "Settings",
     "exit": "Exit Game",
     "difficulty": "Difficulty",
@@ -24,5 +29,7 @@
     "retry": "Yes",
     "cancel": "No",
     "small_res": "Small",
-    "medium_res": "Medium"
+    "medium_res": "Medium",
+    "bad_ip_title": "Invalid IP",
+    "bad_ip_msg": "The IP is invalid!\nPlease enter a valid IP-Adress!"
 }
